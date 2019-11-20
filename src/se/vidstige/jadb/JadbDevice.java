@@ -66,6 +66,19 @@ public class JadbDevice {
         }
         return transport;
     }
+    
+    private Transport getTransport(int timeout) throws IOException, JadbException {
+        Transport transport = transportFactory.createTransport(timeout);
+        // Do not use try-with-resources here. We want to return unclosed Transport and it is up to caller
+        // to close it. Here we close it only in case of exception.
+        try {
+            send(transport, serial == null ? "host:transport-any" : "host:transport:" + serial );
+        } catch (IOException|JadbException e) {
+            transport.close();
+            throw e;
+        }
+        return transport;
+    }
 
     public String getSerial() {
         return serial;
@@ -132,6 +145,13 @@ public class JadbDevice {
         return new BufferedInputStream(transport.getInputStream());
     }
 
+    public InputStream execute(String command, int timeout, String... args) throws IOException, JadbException {
+        Transport transport = getTransport(timeout);
+        StringBuilder shellLine = buildCmdLine(command, args);
+        send(transport, "exec:" + shellLine.toString());
+        return new BufferedInputStream(transport.getInputStream());
+    }
+    
     /**
      * Builds a command line string from the command and its arguments.
      *

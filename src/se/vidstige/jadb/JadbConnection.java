@@ -14,19 +14,33 @@ public class JadbConnection implements ITransportFactory {
 
     private static final int DEFAULTPORT = 5037;
 
+    private final int timeout;
+    
     public JadbConnection() {
-        this("localhost", DEFAULTPORT);
+        this("localhost", DEFAULTPORT, 0);
     }
 
     public JadbConnection(String host, int port) {
+        this(host, port, 0);
+    }
+
+    public JadbConnection(String host, int port, int timeout) {
         this.host = host;
         this.port = port;
+        this.timeout = timeout;
     }
-
+    
     public Transport createTransport() throws IOException {
-        return new Transport(new Socket(host, port));
+        return createTransport(this.timeout);
     }
 
+    public Transport createTransport(int timeout) throws IOException {
+    	Socket socket = new Socket(host, port);
+    	if (timeout > 0)
+    		socket.setSoTimeout(timeout);
+        return new Transport(socket);
+    }
+    
     public String getHostVersion() throws IOException, JadbException {
         try (Transport transport = createTransport()) {
             transport.send("host:version");

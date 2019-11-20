@@ -7,4 +7,5 @@ import java.io.IOException;
  */
 public interface ITransportFactory {
     Transport createTransport() throws IOException;
+    Transport createTransport(int timeout) throws IOException;
 }
